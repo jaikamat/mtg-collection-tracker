@@ -2,9 +2,13 @@ const jwt = require('jsonwebtoken');
 const User = require('../database/models/user');
 const createError = require('http-errors');
 
+const signToken = userId => {
+    const { JWT_SECRET, JWT_EXPIRES_IN } = process.env;
+    return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
+
 const signup = async (req, res, next) => {
     try {
-        const { JWT_SECRET, JWT_EXPIRES_IN } = process.env;
         const { password, passwordConfirm, username, email } = req.body;
 
         // Check the password and confirmed passwords here, if no match, bad request
@@ -16,13 +20,9 @@ const signup = async (req, res, next) => {
             email
         });
 
-        const token = jwt.sign({ id: newUser._id }, JWT_SECRET, {
-            expiresIn: JWT_EXPIRES_IN
-        });
-
         res.status(201).json({
             status: 'success',
-            token,
+            token: signToken(newUser._id),
             data: {
                 user: newUser
             }
@@ -34,7 +34,6 @@ const signup = async (req, res, next) => {
 
 const login = async (req, res, next) => {
     try {
-        const { JWT_SECRET, JWT_EXPIRES_IN } = process.env;
         const { email, password } = req.body;
 
         if (!email || !password) return next(createError(400, 'Email and password must be supplied'));
@@ -45,11 +44,9 @@ const login = async (req, res, next) => {
             return next(createError(401, 'Incorrect email or password'));
         }
 
-        const token = jwt.sign({ id: foundUser._id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-
         return res.status(200).json({
             status: "success",
-            token
+            token: signToken(foundUser._id)
         });
     } catch (err) {
         next(err)
