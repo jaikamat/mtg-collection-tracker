@@ -22,15 +22,21 @@ const UserSchema = mongoose.Schema({
     }
 })
 
+/**
+ * Presave hook that hashes provided passwords prior to persisting
+ */
 UserSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next(); // If non-password field is modified, we don't want to re-hash the password
 
-    this.password = await bcrypt.hash(this.password, 12); // Set instance's new PW to hashed PW
+    this.password = await bcrypt.hash(this.password, 12);
 
     next();
 })
 
-UserSchema.methods.correctPassword = async function (candidatePassword) { // this is a document instance method
+/**
+ * Instance method that compares a hash against its assumed plaintext equivalent
+ */
+UserSchema.methods.correctPassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 }
 
