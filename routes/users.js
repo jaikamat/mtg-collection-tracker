@@ -7,15 +7,17 @@ router.get('/', async function (req, res, next) {
   res.send('GET /users');
 });
 
-// Create a new user (sign up)
-router.post('/signup', authController.signup);
+router
+  .route('/signup')
+  .post(authController.signup) // Create a new user (sign up)
 
-// Login a user
-router.post('/login', authController.login);
+router
+  .route('/login')
+  .post(authController.login) // Login a user
 
-/* POST user listing - edit user */
-router.post('/:id', function (req, res, next) {
-  res.send(`POST /users/${JSON.stringify(req.params)}`);
-});
+// /* POST user listing - edit user */
+// router.post('/:id', function (req, res, next) {
+//   res.send(`POST /users/${JSON.stringify(req.params)}`);
+// });
 
 module.exports = router;

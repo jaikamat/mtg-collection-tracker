@@ -19,7 +19,8 @@ const UserSchema = mongoose.Schema({
         required: true,
         lowercase: true,
         validate: [validator.isEmail, 'Please provide a valid email']
-    }
+    },
+    passwordChangedAt: Date
 })
 
 /**
@@ -38,6 +39,17 @@ UserSchema.pre('save', async function (next) {
  */
 UserSchema.methods.correctPassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
+}
+
+/**
+ * Instance method that determines if a user changed their password after a timestamp was issued
+ */
+UserSchema.methods.changedPasswordAfter = async function (JWTtimestamp) {
+    if (this.passwordChangedAt) {
+        console.log(this.passwordChangedAt, JWTtimestamp);
+    }
+
+    return false;
 }
 
 const User = mongoose.model('User', UserSchema);

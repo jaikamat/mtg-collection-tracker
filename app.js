@@ -19,6 +19,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 // app.use(express.static(path.join(__dirname, 'public')));
 
+// DateTime logging middleware
+app.use((req, res, next) => {
+    req.requestTime = new Date().toISOString();
+    next();
+})
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
@@ -36,6 +42,7 @@ app.use(function (err, req, res, next) {
     res.status(err.status || 500);
 
     res.json({
+        name: err.name,
         status: err.status,
         message: err.message
     })

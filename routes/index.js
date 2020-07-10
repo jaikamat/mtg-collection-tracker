@@ -1,18 +1,14 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
+const indexController = require('../controllers/indexController');
+const authController = require('../controllers/authController');
 
-/* GET home page. */
-router.get('/', function (req, res, next) {
-  return res.json({
-    message: 'This is the home page'
-  })
-});
+router
+  .route('/')
+  .get(indexController.homepage)
 
-/* GET some protected route */
-router.get('/protected', (req, res, next) => {
-  return res.json({
-    message: 'This is a protected route!'
-  })
-})
+router
+  .route('/protected')
+  .get(authController.protect, indexController.protected)
 
 module.exports = router;

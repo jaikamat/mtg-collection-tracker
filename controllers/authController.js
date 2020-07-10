@@ -1,3 +1,4 @@
+const { promisify } = require('util');
 const jwt = require('jsonwebtoken');
 const User = require('../database/models/user');
 const createError = require('http-errors');
@@ -9,7 +10,7 @@ const signToken = userId => {
 
 const signup = async (req, res, next) => {
     try {
-        const { password, passwordConfirm, username, email } = req.body;
+        const { password, passwordConfirm, username, email, passwordChangedAt } = req.body;
 
         // Check the password and confirmed passwords here, if no match, bad request
         if (passwordConfirm !== password) return next(createError(400, 'Passwords do not match'));
@@ -17,7 +18,8 @@ const signup = async (req, res, next) => {
         const newUser = await User.create({
             password,
             username,
-            email
+            email,
+            passwordChangedAt
         });
 
         res.status(201).json({
@@ -53,5 +55,36 @@ const login = async (req, res, next) => {
     }
 }
 
+/**
+ * Auth middleware
+ */
+const protect = async (req, res, next) => {
+    try {
+        const { authorization } = req.headers;
+        let token;
+
+        if (authorization && authorization.startsWith('Bearer ')) {
+            token = authorization.split(' ')[1]; // Isolate token from headers
+        }
+
+        if (!token) return next(createError(401, 'Unauthorized'));
+
+        const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); // Promisify the sync verify() method
+
+        const foundUser = await User.findById(decoded.id); // Find the user from the token UserID
+
+        if (!foundUser) return next(createError(401, 'The user belonging to this token no longer exists'));
+
+        foundUser.changedPasswordAfter(decoded.iat);
+
+        return next();
+    } catch (err) {
+        if (err.name === 'TokenExpiredError') return next(createError(401, err));
+        if (err.name === 'JsonWebTokenError') return next(createError(401, err));
+        return next(createError(401, 'Not authorized'));
+    }
+}
+
 module.exports.signup = signup;
 module.exports.login = login;
+module.exports.protect = protect;
