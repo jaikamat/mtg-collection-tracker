@@ -10,7 +10,7 @@ const signToken = userId => {
 
 const signup = async (req, res, next) => {
     try {
-        const { password, passwordConfirm, username, email, passwordChangedAt } = req.body;
+        const { password, passwordConfirm, username, email, role, passwordChangedAt } = req.body;
 
         // Check the password and confirmed passwords here, if no match, bad request
         if (passwordConfirm !== password) return next(createError(400, 'Passwords do not match'));
@@ -19,6 +19,7 @@ const signup = async (req, res, next) => {
             password,
             username,
             email,
+            role,
             passwordChangedAt
         });
 
@@ -89,6 +90,11 @@ const protect = async (req, res, next) => {
     }
 }
 
+const restrictTo = (req, res, next) => {
+    console.log('Middleware activated');
+}
+
 module.exports.signup = signup;
 module.exports.login = login;
 module.exports.protect = protect;
+module.exports.restrictTo = restrictTo;
