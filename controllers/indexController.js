@@ -6,7 +6,8 @@ const homepage = (req, res, next) => {
 
 const protected = (req, res, next) => {
     return res.json({
-        message: 'This is a protected route'
+        message: 'This is a protected route',
+        user: req.user
     })
 }
 

@@ -75,9 +75,13 @@ const protect = async (req, res, next) => {
 
         if (!foundUser) return next(createError(401, 'The user belonging to this token no longer exists'));
 
-        foundUser.changedPasswordAfter(decoded.iat);
+        if (!foundUser.tokenIssuedAfterPasswordChange(decoded.iat)) {
+            return next(createError(401, 'Token issued before password change'));
+        }
 
-        return next();
+        req.user = foundUser;
+
+        return next(); // Grant access to protected route
     } catch (err) {
         if (err.name === 'TokenExpiredError') return next(createError(401, err));
         if (err.name === 'JsonWebTokenError') return next(createError(401, err));

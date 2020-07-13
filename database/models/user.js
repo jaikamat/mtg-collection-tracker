@@ -42,11 +42,13 @@ UserSchema.methods.correctPassword = async function (candidatePassword) {
 }
 
 /**
- * Instance method that determines if a user changed their password after a timestamp was issued
+ * Instance method that determines if a user changed their password after a token was issued
  */
-UserSchema.methods.changedPasswordAfter = async function (JWTtimestamp) {
+UserSchema.methods.tokenIssuedAfterPasswordChange = function (JWTtimestamp) {
     if (this.passwordChangedAt) {
-        console.log(this.passwordChangedAt, JWTtimestamp);
+        const passwordChangeTime = parseInt(this.passwordChangedAt.getTime() / 1000, 10); // Need to get this in sec, getTime() yields ms
+
+        return (JWTtimestamp - passwordChangeTime) > 0; // JWT should be issued after the password was changed
     }
 
     return false;
