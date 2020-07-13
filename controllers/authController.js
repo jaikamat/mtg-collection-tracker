@@ -35,6 +35,9 @@ const signup = async (req, res, next) => {
     }
 }
 
+/**
+ * User login controller
+ */
 const login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
@@ -57,7 +60,7 @@ const login = async (req, res, next) => {
 }
 
 /**
- * Auth middleware
+ * Resource route auth middleware
  */
 const protect = async (req, res, next) => {
     try {
@@ -72,16 +75,15 @@ const protect = async (req, res, next) => {
 
         const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); // Promisify the sync verify() method
 
-        const foundUser = await User.findById(decoded.id); // Find the user from the token UserID
+        const currentUser = await User.findById(decoded.id); // Find the user from the token UserID
 
-        if (!foundUser) return next(createError(401, 'The user belonging to this token no longer exists'));
+        if (!currentUser) return next(createError(401, 'The user belonging to this token no longer exists'));
 
-        if (!foundUser.tokenIssuedAfterPasswordChange(decoded.iat)) {
+        if (!currentUser.tokenIssuedAfterPasswordChange(decoded.iat)) {
             return next(createError(401, 'Token issued before password change'));
         }
 
-        req.user = foundUser;
-
+        req.user = currentUser; // Expose the user on the req object for further middleware use
         return next(); // Grant access to protected route
     } catch (err) {
         if (err.name === 'TokenExpiredError') return next(createError(401, err));
@@ -90,8 +92,21 @@ const protect = async (req, res, next) => {
     }
 }
 
-const restrictTo = (req, res, next) => {
-    console.log('Middleware activated');
+/**
+ * Middleware that permits a user of a designated role to access resources
+ * Used in conjunction with protect() which exposes req.user
+ * @param {String} role - the user role
+ */
+const restrictTo = (...roles) => {
+    return (req, res, next) => {
+        const { role } = req.user;
+
+        if (!roles.includes(role)) {
+            return next(createError(403, `User role of '${role}' not permitted access`));
+        }
+
+        return next();
+    }
 }
 
 module.exports.signup = signup;

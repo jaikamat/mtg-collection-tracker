@@ -12,7 +12,7 @@ router
   .get(authController.protect, indexController.protected)
   .delete(
     authController.protect,
-    // authController.restrictTo('admin'),
+    authController.restrictTo('admin'),
     indexController.protected
   )
 
