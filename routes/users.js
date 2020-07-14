@@ -16,7 +16,7 @@ router
   .post(authController.login) // Login a user
 
 router.post('/forgot-password', authController.forgotPassword)
-router.post('/reset-password', authController.resetPassword)
+router.patch('/reset-password/:token', authController.resetPassword)
 
 // /* POST user listing - edit user */
 // router.post('/:id', function (req, res, next) {
