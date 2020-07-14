@@ -44,7 +44,8 @@ app.use(function (err, req, res, next) {
     res.json({
         name: err.name,
         status: err.status,
-        message: err.message
+        message: err.message,
+        stack: err.stack
     })
 });
 
