@@ -31,7 +31,7 @@ const signup = async (req, res, next) => {
             }
         })
     } catch (err) {
-        next(err);
+        return next(err);
     }
 }
 
@@ -55,7 +55,7 @@ const login = async (req, res, next) => {
             token: signToken(foundUser._id)
         });
     } catch (err) {
-        next(err)
+        return next(err)
     }
 }
 
@@ -63,7 +63,22 @@ const login = async (req, res, next) => {
  * Sends user a reset token and sends to provided email address
  */
 const forgotPassword = async (req, res, next) => {
-    res.json('forgot password reached')
+    try {
+        const { email } = req.body;
+
+        const user = await User.findOne({ email: email });
+
+        if (!user) {
+            return next(createError(404, 'There is no user with that email address'));
+        }
+
+        const resetToken = user.createPasswordResetToken();
+        await user.save(); // Save the modified user object
+
+        res.json({ resetToken }); // Placeholder. This should send an email
+    } catch (err) {
+        return next(createError(500, err.message));
+    }
 }
 
 /**
