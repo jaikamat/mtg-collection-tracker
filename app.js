@@ -5,8 +5,7 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const createError = require('http-errors');
 
-const indexRouter = require('./routes/index');
-const usersRouter = require('./routes/users');
+const appRouter = require('./routes/appRouter');
 
 const connect = require('./database/connect');
 connect().catch(console.log); // Connect to MongoDB
@@ -25,8 +24,7 @@ app.use((req, res, next) => {
     next();
 })
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+app.use('/api/v1', appRouter);
 
 // Catch 404 and forward to error handler
 app.use(function (req, res, next) {
