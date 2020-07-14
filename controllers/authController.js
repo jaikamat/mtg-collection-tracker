@@ -73,8 +73,7 @@ const forgotPassword = async (req, res, next) => {
             return next(createError(404, 'There is no user with that email address'));
         }
 
-        const resetToken = user.createPasswordResetToken();
-        await user.save(); // Save the modified user object
+        const resetToken = user.createPasswordResetToken(); // Modifies the User instance without persisting
 
         const resetURL = `${req.protocol}://${req.get('host')}/api/v1/users/reset-password/${resetToken}`;
 
@@ -84,6 +83,8 @@ const forgotPassword = async (req, res, next) => {
             \nIf you didn't forget your password, please ignore this email.`;
 
         try {
+            await user.save(); // Save the modified user object
+
             await sendEmail({
                 email: user.email,
                 subject,
