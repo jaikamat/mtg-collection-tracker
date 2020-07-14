@@ -60,6 +60,20 @@ const login = async (req, res, next) => {
 }
 
 /**
+ * Sends user a reset token and sends to provided email address
+ */
+const forgotPassword = async (req, res, next) => {
+    res.json('forgot password reached')
+}
+
+/**
+ * Allows users to reset their password
+ */
+const resetPassword = async (req, res, next) => {
+    res.json('reset password reached')
+}
+
+/**
  * Resource route auth middleware
  */
 const protect = async (req, res, next) => {
@@ -113,3 +127,5 @@ module.exports.signup = signup;
 module.exports.login = login;
 module.exports.protect = protect;
 module.exports.restrictTo = restrictTo;
+module.exports.forgotPassword = forgotPassword;
+module.exports.resetPassword = resetPassword;
