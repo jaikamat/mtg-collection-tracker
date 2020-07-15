@@ -13,7 +13,7 @@ router
 
 router
   .route('/login')
-  .post(authController.login) // Login a user
+  .post(authController.validatePasswordMatch, authController.login) // Login a user
 
 router
   .route('/forgot-password')

@@ -12,10 +12,7 @@ const signToken = userId => {
 
 const signup = async (req, res, next) => {
     try {
-        const { password, passwordConfirm, username, email, role, passwordChangedAt } = req.body;
-
-        // Check the password and confirmed passwords here, if no match, bad request
-        if (passwordConfirm !== password) return next(createError(400, 'Passwords do not match'));
+        const { password, username, email, role, passwordChangedAt } = req.body;
 
         const newUser = await User.create({
             password,
@@ -114,7 +111,7 @@ const forgotPassword = async (req, res, next) => {
 const resetPassword = async (req, res, next) => {
     try {
         const { token } = req.params;
-        const { password, passwordConfirm } = req.body;
+        const { password } = req.body;
         const hashedToken = crypto // Have to hash the token first before using it to find users
             .createHash('sha256')
             .update(token)
