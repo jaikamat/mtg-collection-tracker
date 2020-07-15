@@ -1,4 +1,5 @@
 const { promisify } = require('util');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const User = require('../database/models/user');
 const createError = require('http-errors');
@@ -111,7 +112,39 @@ const forgotPassword = async (req, res, next) => {
  * Allows users to reset their password
  */
 const resetPassword = async (req, res, next) => {
-    res.json('reset password reached')
+    try {
+        // TODO: Create a password matching handling middleware for routes like this do to the confirmation match
+        const now = Date.now();
+        const { token } = req.params;
+        const { password, passwordConfirm } = req.body;
+        const hashedToken = crypto // Have to hash the token first before using it to find users
+            .createHash('sha256')
+            .update(token)
+            .digest('hex');
+
+        const user = await User.findOne({
+            passwordResetToken: hashedToken, // Find user by hashed token
+            passwordResetExpires: { $gt: now } // Ensure the password reset token is not expired (expiry should be later than now)
+        });
+
+        if (!user) return next(createError(400, 'Token is invalid or has expired'));
+
+        user.passwordChangedAt = now; // Password was changed now
+        user.password = password; // Hash will occur during presave hook
+        user.passwordResetToken = undefined; // Reset
+        user.passwordResetExpires = undefined; // Reset
+
+        await user.save(); // Trigger presave hooks to hash new password
+
+        // Log the user in (send a JWT to the client)
+        res.status(201).json({
+            status: 'success',
+            token: signToken(user._id),
+            data: { user }
+        })
+    } catch (err) {
+        return next(createError(500, err))
+    }
 }
 
 /**
