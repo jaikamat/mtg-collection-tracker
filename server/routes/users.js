@@ -9,7 +9,7 @@ router.get('/', async function (req, res, next) {
 
 router
   .route('/signup')
-  .post(authController.signup) // Create a new user (sign up)
+  .post(authController.validatePasswordMatch, authController.signup) // Create a new user (sign up)
 
 router
   .route('/login')
