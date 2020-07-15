@@ -15,8 +15,13 @@ router
   .route('/login')
   .post(authController.login) // Login a user
 
-router.post('/forgot-password', authController.forgotPassword)
-router.patch('/reset-password/:token', authController.resetPassword)
+router
+  .route('/forgot-password')
+  .post(authController.forgotPassword)
+
+router
+  .route('/reset-password/:token')
+  .patch(authController.validatePasswordMatch, authController.resetPassword)
 
 // /* POST user listing - edit user */
 // router.post('/:id', function (req, res, next) {

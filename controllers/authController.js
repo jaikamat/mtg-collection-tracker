@@ -181,6 +181,19 @@ const protect = async (req, res, next) => {
 }
 
 /**
+ * Middleware that validates password and confirm-password fields from form submissions
+ */
+const validatePasswordMatch = (req, res, next) => {
+    const { password, passwordConfirm } = req.body;
+
+    if (password !== passwordConfirm) {
+        return next(createError(400, 'Password and confirmed password must match'));
+    }
+
+    return next();
+}
+
+/**
  * Middleware that permits a user of a designated role to access resources
  * Used in conjunction with protect() which exposes req.user
  * @param {String} role - the user role
@@ -203,3 +216,4 @@ module.exports.protect = protect;
 module.exports.restrictTo = restrictTo;
 module.exports.forgotPassword = forgotPassword;
 module.exports.resetPassword = resetPassword;
+module.exports.validatePasswordMatch = validatePasswordMatch;
