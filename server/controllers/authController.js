@@ -4,10 +4,23 @@ const jwt = require('jsonwebtoken');
 const User = require('../database/models/user');
 const createError = require('http-errors');
 const sendEmail = require('../utils/email');
+const { SSL_OP_NETSCAPE_CA_DN_BUG } = require('constants');
 
+/**
+ * Signs a JWT token and embeds the user ID
+ * @param {String} userId - A user ID
+ */
 const signToken = userId => {
     const { JWT_SECRET, JWT_EXPIRES_IN } = process.env;
     return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+}
+
+/**
+ * Decodes a JWT to expose its data
+ * @param {String} token - A raw JWT token
+ */
+const decodeToken = async token => {
+    return await promisify(jwt.verify)(token, process.env.JWT_SECRET); // Promisify the sync verify() method
 }
 
 const signup = async (req, res, next) => {
@@ -145,11 +158,13 @@ const resetPassword = async (req, res, next) => {
  * Update password functionality for logged-in users
  */
 const updatePassword = async (req, res, next) => {
-    // TODO Create an auth middleware that scans the incoming req for bearer token and adds it to the req object
     // 0. Decode the token and get the user ID
 
+    const { jwtToken } = req.body;
 
+    if (!jwtToken) return next(createError(400, 'No authentication token was provided'));
 
+    const decoded = await decodeToken(jwtToken);
     // 1. Get the user from the User collection
     // 2. Ensure password is correct
     // 3. Reset password that was provided
@@ -166,7 +181,7 @@ const protect = async (req, res, next) => {
 
         if (!jwtToken) return next(createError(401, 'Unauthorized'));
 
-        const decoded = await promisify(jwt.verify)(jwtToken, process.env.JWT_SECRET); // Promisify the sync verify() method
+        const decoded = await decodeToken(jwtToken);
 
         const currentUser = await User.findById(decoded.id); // Find the user from the token UserID
 
