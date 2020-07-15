@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 
-router.use(authController.applyTokenToReq);
-
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
   res.send('GET /users');
@@ -24,6 +22,14 @@ router
 router
   .route('/reset-password/:token')
   .patch(authController.validatePasswordMatch, authController.resetPassword)
+
+router
+  .route('/update-password')
+  .patch(
+    authController.protect,
+    authController.validatePasswordMatch,
+    authController.updatePassword
+  )
 
 // /* POST user listing - edit user */
 // router.post('/:id', function (req, res, next) {

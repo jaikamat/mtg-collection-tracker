@@ -3,8 +3,6 @@ const router = express.Router();
 const indexController = require('../controllers/indexController');
 const authController = require('../controllers/authController');
 
-router.use(authController.applyTokenToReq);
-
 router
   .route('/')
   .get(indexController.homepage)

@@ -4,10 +4,9 @@ const jwt = require('jsonwebtoken');
 const User = require('../database/models/user');
 const createError = require('http-errors');
 const sendEmail = require('../utils/email');
-const { SSL_OP_NETSCAPE_CA_DN_BUG } = require('constants');
 
 /**
- * Signs a JWT token and embeds the user ID
+ * Encrypts a JWT token and embeds the user ID
  * @param {String} userId - A user ID
  */
 const signToken = userId => {
@@ -16,7 +15,7 @@ const signToken = userId => {
 }
 
 /**
- * Decodes a JWT to expose its data
+ * Decrypts a JWT to expose its data
  * @param {String} token - A raw JWT token
  */
 const decodeToken = async token => {
@@ -25,14 +24,13 @@ const decodeToken = async token => {
 
 const signup = async (req, res, next) => {
     try {
-        const { password, username, email, role, passwordChangedAt } = req.body;
+        const { password, username, email, role } = req.body;
 
         const newUser = await User.create({
             password,
             username,
             email,
-            role,
-            passwordChangedAt
+            role
         });
 
         res.status(201).json({
@@ -158,18 +156,27 @@ const resetPassword = async (req, res, next) => {
  * Update password functionality for logged-in users
  */
 const updatePassword = async (req, res, next) => {
-    // 0. Decode the token and get the user ID
+    try {
+        const { oldPassword, password } = req.body;
+        const { user } = req;
 
-    const { jwtToken } = req.body;
+        const foundUser = await User.findById(user._id);
 
-    if (!jwtToken) return next(createError(400, 'No authentication token was provided'));
+        if (!await foundUser.correctPassword(oldPassword)) {
+            return next(createError(401, 'Password is incorrect'));
+        }
 
-    const decoded = await decodeToken(jwtToken);
-    // 1. Get the user from the User collection
-    // 2. Ensure password is correct
-    // 3. Reset password that was provided
-    // 4. Save and prehook function will hash
-    // 5. Log the user in
+        foundUser.password = password;
+        const newUser = await foundUser.save(); // Trigger presave password hashing hook
+
+        res.status(201).json({
+            status: 'success',
+            token: signToken(user._id),
+            data: { newUser }
+        })
+    } catch (err) {
+        return next(createError(err));
+    }
 }
 
 /**
@@ -177,11 +184,16 @@ const updatePassword = async (req, res, next) => {
  */
 const protect = async (req, res, next) => {
     try {
-        const { jwtToken } = req.body;
+        const { authorization } = req.headers;
+        let token;
 
-        if (!jwtToken) return next(createError(401, 'Unauthorized'));
+        if (authorization && authorization.startsWith('Bearer ')) {
+            token = authorization.split(' ')[1]; // Isolate token from headers
+        }
 
-        const decoded = await decodeToken(jwtToken);
+        if (!token) return next(createError(401, 'Unauthorized'));
+
+        const decoded = await decodeToken(token);
 
         const currentUser = await User.findById(decoded.id); // Find the user from the token UserID
 
@@ -206,25 +218,14 @@ const protect = async (req, res, next) => {
 const validatePasswordMatch = (req, res, next) => {
     const { password, passwordConfirm } = req.body;
 
+    if (!password || !passwordConfirm) {
+        return next(createError(400, 'Password and passwordConfirm must be provided'));
+    }
+
     if (password !== passwordConfirm) {
-        return next(createError(400, 'Password and confirmed password must match'));
+        return next(createError(400, 'Password and passwordConfirm must match'));
     }
 
-    return next();
-}
-
-/**
- * Scans the incoming request for a Bearer JWT token, and if one is preset, tacks it onto the req object
- */
-const applyTokenToReq = (req, res, next) => {
-    const { authorization } = req.headers;
-    let token;
-
-    if (authorization && authorization.startsWith('Bearer ')) {
-        token = authorization.split(' ')[1]; // Isolate token from headers
-    }
-
-    req.body.jwtToken = token;
     return next();
 }
 
@@ -253,4 +254,3 @@ module.exports.forgotPassword = forgotPassword;
 module.exports.resetPassword = resetPassword;
 module.exports.validatePasswordMatch = validatePasswordMatch;
 module.exports.updatePassword = updatePassword;
-module.exports.applyTokenToReq = applyTokenToReq;
