@@ -113,8 +113,6 @@ const forgotPassword = async (req, res, next) => {
  */
 const resetPassword = async (req, res, next) => {
     try {
-        // TODO: Create a password matching handling middleware for routes like this do to the confirmation match
-        const now = Date.now();
         const { token } = req.params;
         const { password, passwordConfirm } = req.body;
         const hashedToken = crypto // Have to hash the token first before using it to find users
@@ -124,12 +122,11 @@ const resetPassword = async (req, res, next) => {
 
         const user = await User.findOne({
             passwordResetToken: hashedToken, // Find user by hashed token
-            passwordResetExpires: { $gt: now } // Ensure the password reset token is not expired (expiry should be later than now)
+            passwordResetExpires: { $gt: Date.now() } // Ensure the password reset token is not expired (expiry should be later than now)
         });
 
         if (!user) return next(createError(400, 'Token is invalid or has expired'));
 
-        user.passwordChangedAt = now; // Password was changed now
         user.password = password; // Hash will occur during presave hook
         user.passwordResetToken = undefined; // Reset
         user.passwordResetExpires = undefined; // Reset
