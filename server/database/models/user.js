@@ -42,6 +42,13 @@ UserSchema.pre('save', async function (next) {
     next();
 })
 
+UserSchema.pre('save', function (next) {
+    if (!this.isModified('password') || this.isNew) return next(); // If password not modified OR if new user created (the password was not changed), exit
+
+    this.passwordChangedAt = Date.now() - 1000; // Subtract 1s to account for possible async token generation in the past
+    return next();
+})
+
 /**
  * Instance method that compares a hash against its assumed plaintext equivalent
  */
@@ -53,13 +60,13 @@ UserSchema.methods.correctPassword = async function (candidatePassword) {
  * Instance method that determines if a user changed their password after a token was issued
  */
 UserSchema.methods.tokenIssuedAfterPasswordChange = function (JWTtimestamp) {
-    if (this.passwordChangedAt) {
-        const passwordChangeTime = parseInt(this.passwordChangedAt.getTime() / 1000, 10); // Need to get this in sec, getTime() yields ms
-
-        return (JWTtimestamp - passwordChangeTime) > 0; // JWT should be issued after the password was changed
+    if (!this.passwordChangedAt) { // If user instance does not have passwordChangedAt field, no need to check token against date
+        return true;
     }
 
-    return false;
+    const passwordChangeTime = parseInt(this.passwordChangedAt.getTime() / 1000, 10); // Need to get this in sec, getTime() yields ms
+
+    return (JWTtimestamp - passwordChangeTime) > 0; // JWT should be issued after the password was changed
 }
 
 /**
