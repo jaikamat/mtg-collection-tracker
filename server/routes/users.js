@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 
+router.use(authController.applyTokenToReq);
+
 /* GET users listing. */
 router.get('/', async function (req, res, next) {
   res.send('GET /users');

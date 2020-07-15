@@ -142,20 +142,31 @@ const resetPassword = async (req, res, next) => {
 }
 
 /**
+ * Update password functionality for logged-in users
+ */
+const updatePassword = async (req, res, next) => {
+    // TODO Create an auth middleware that scans the incoming req for bearer token and adds it to the req object
+    // 0. Decode the token and get the user ID
+
+
+
+    // 1. Get the user from the User collection
+    // 2. Ensure password is correct
+    // 3. Reset password that was provided
+    // 4. Save and prehook function will hash
+    // 5. Log the user in
+}
+
+/**
  * Resource route auth middleware
  */
 const protect = async (req, res, next) => {
     try {
-        const { authorization } = req.headers;
-        let token;
+        const { jwtToken } = req.body;
 
-        if (authorization && authorization.startsWith('Bearer ')) {
-            token = authorization.split(' ')[1]; // Isolate token from headers
-        }
+        if (!jwtToken) return next(createError(401, 'Unauthorized'));
 
-        if (!token) return next(createError(401, 'Unauthorized'));
-
-        const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); // Promisify the sync verify() method
+        const decoded = await promisify(jwt.verify)(jwtToken, process.env.JWT_SECRET); // Promisify the sync verify() method
 
         const currentUser = await User.findById(decoded.id); // Find the user from the token UserID
 
@@ -188,6 +199,21 @@ const validatePasswordMatch = (req, res, next) => {
 }
 
 /**
+ * Scans the incoming request for a Bearer JWT token, and if one is preset, tacks it onto the req object
+ */
+const applyTokenToReq = (req, res, next) => {
+    const { authorization } = req.headers;
+    let token;
+
+    if (authorization && authorization.startsWith('Bearer ')) {
+        token = authorization.split(' ')[1]; // Isolate token from headers
+    }
+
+    req.body.jwtToken = token;
+    return next();
+}
+
+/**
  * Middleware that permits a user of a designated role to access resources
  * Used in conjunction with protect() which exposes req.user
  * @param {String} role - the user role
@@ -211,3 +237,5 @@ module.exports.restrictTo = restrictTo;
 module.exports.forgotPassword = forgotPassword;
 module.exports.resetPassword = resetPassword;
 module.exports.validatePasswordMatch = validatePasswordMatch;
+module.exports.updatePassword = updatePassword;
+module.exports.applyTokenToReq = applyTokenToReq;
