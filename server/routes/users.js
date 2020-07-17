@@ -31,6 +31,13 @@ router
     authController.updatePassword
   )
 
+router
+  .route('/:id')
+  .patch(
+    authController.protect,
+    authController.userUpdateSelf
+  )
+
 // /* POST user listing - edit user */
 // router.post('/:id', function (req, res, next) {
 //   res.send(`POST /users/${JSON.stringify(req.params)}`);
