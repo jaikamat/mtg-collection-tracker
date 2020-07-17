@@ -22,6 +22,23 @@ const decodeToken = async token => {
     return await promisify(jwt.verify)(token, process.env.JWT_SECRET); // Promisify the sync verify() method
 }
 
+/**
+ * Creates and sends an encrypted token via the response object
+ *
+ * @param {Object} res - The response object
+ * @param {Integer} statusCode - The HTTP status code
+ * @param {Object} user - The user
+ */
+const createSendToken = (res, statusCode, user) => {
+    const { _id } = user;
+
+    return res.status(statusCode).json({
+        status: 'success',
+        token: signToken(_id),
+        data: { user }
+    })
+}
+
 const signup = async (req, res, next) => {
     try {
         const { password, username, email, role } = req.body;
@@ -33,13 +50,7 @@ const signup = async (req, res, next) => {
             role
         });
 
-        res.status(201).json({
-            status: 'success',
-            token: signToken(newUser._id),
-            data: {
-                user: newUser
-            }
-        })
+        createSendToken(res, 201, newUser);
     } catch (err) {
         return next(err);
     }
@@ -60,10 +71,7 @@ const login = async (req, res, next) => {
             return next(createError(401, 'Incorrect email or password'));
         }
 
-        return res.status(200).json({
-            status: "success",
-            token: signToken(foundUser._id)
-        });
+        createSendToken(res, 200, foundUser);
     } catch (err) {
         return next(err)
     }
@@ -142,11 +150,7 @@ const resetPassword = async (req, res, next) => {
         await user.save(); // Trigger presave hooks to hash new password
 
         // Log the user in (send a JWT to the client)
-        res.status(201).json({
-            status: 'success',
-            token: signToken(user._id),
-            data: { user }
-        })
+        createSendToken(res, 201, user);
     } catch (err) {
         return next(createError(500, err))
     }
