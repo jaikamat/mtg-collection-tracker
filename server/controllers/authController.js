@@ -263,7 +263,7 @@ const userUpdate = async (req, res, next) => {
             return next(createError(400, 'Cannot update passwords using this resource'))
         }
 
-        if (role === 'user' && id !== req.user.id) {
+        if (role !== 'admin' && id !== req.user.id) { // If you're not an admin, your id should match the resource id
             return next(createError(400, 'Cannot update other user records'))
         }
 
