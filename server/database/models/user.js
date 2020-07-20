@@ -26,6 +26,10 @@ const UserSchema = mongoose.Schema({
         enum: ['user', 'member', 'admin', 'owner'],
         default: 'user'
     },
+    active: {
+        type: Boolean,
+        default: true
+    },
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date
@@ -47,6 +51,15 @@ UserSchema.pre('save', function (next) {
 
     this.passwordChangedAt = Date.now() - 1000; // Subtract 1s to account for possible async token generation in the past
     return next();
+})
+
+/**
+ * Does not return users which have been archived when using find queries
+ */
+UserSchema.pre(/^find/, function (next) {
+    this.find({ active: { $ne: false } });
+
+    next();
 })
 
 /**
