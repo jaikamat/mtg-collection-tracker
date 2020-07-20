@@ -14,6 +14,34 @@ const getAllUsers = async (req, res, next) => {
 }
 
 /**
+ * Route that allows the user to update their own username and/or email address
+ */
+const userUpdate = async (req, res, next) => {
+    try {
+        const { password, passwordConfirm, email, username } = req.body;
+        const { id } = req.params;
+        const { role } = req.user;
+
+        if (password || passwordConfirm) { // Users cannot update their passwords via this method
+            return next(createError(400, 'Cannot update passwords using this resource'))
+        }
+
+        if (role !== 'admin' && id !== req.user.id) { // If you're not an admin, your id should match the resource id
+            return next(createError(400, 'Cannot update other user records'))
+        }
+
+        const currentUser = await User.findById(id);
+        if (username) currentUser.username = username;
+        if (email) currentUser.email = email;
+        const newUser = await currentUser.save();
+
+        res.status(201).json({ user: newUser });
+    } catch (err) {
+        return next(createError(err));
+    }
+}
+
+/**
  * Soft-deletes the specified user by setting 'active' to false
  */
 const deleteUser = async (req, res, next) => {
@@ -37,4 +65,5 @@ const deleteUser = async (req, res, next) => {
 }
 
 module.exports.getAllUsers = getAllUsers;
+module.exports.userUpdate = userUpdate;
 module.exports.deleteUser = deleteUser;

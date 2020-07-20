@@ -39,16 +39,11 @@ router
   .route('/:id')
   .patch(
     authController.protect,
-    authController.userUpdate
+    userController.userUpdate
   )
   .delete(
     authController.protect,
     userController.deleteUser
   )
-
-// /* POST user listing - edit user */
-// router.post('/:id', function (req, res, next) {
-//   res.send(`POST /users/${JSON.stringify(req.params)}`);
-// });
 
 module.exports = router;
