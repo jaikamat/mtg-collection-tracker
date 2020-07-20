@@ -37,6 +37,10 @@ router
 
 router
   .route('/:id')
+  .get(
+    authController.protect,
+    userController.getOneUser
+  )
   .patch(
     authController.protect,
     userController.userUpdate
