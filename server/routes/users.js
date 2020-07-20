@@ -1,11 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const userController = require('../controllers/userController');
 
-/* GET users listing. */
-router.get('/', async function (req, res, next) {
-  res.send('GET /users');
-});
+router
+  .route('/')
+  .get(
+    authController.protect,
+    authController.restrictTo('admin'),
+    userController.getAllUsers
+  )
 
 router
   .route('/signup')
@@ -36,6 +40,10 @@ router
   .patch(
     authController.protect,
     authController.userUpdate
+  )
+  .delete(
+    authController.protect,
+    userController.deleteUser
   )
 
 // /* POST user listing - edit user */
