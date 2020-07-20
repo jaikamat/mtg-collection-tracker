@@ -253,13 +253,18 @@ const restrictTo = (...roles) => {
 /**
  * Route that allows the user to update their own username and/or email address
  */
-const userUpdateSelf = async (req, res, next) => {
+const userUpdate = async (req, res, next) => {
     try {
         const { password, passwordConfirm, email, username } = req.body;
-        const { id } = req.user;
+        const { id } = req.params;
+        const { role } = req.user;
 
         if (password || passwordConfirm) { // Users cannot update their passwords via this method
             return next(createError(400, 'Cannot update passwords using this resource'))
+        }
+
+        if (role === 'user' && id !== req.user.id) {
+            return next(createError(400, 'Cannot update other user records'))
         }
 
         const currentUser = await User.findById(id);
@@ -281,4 +286,4 @@ module.exports.forgotPassword = forgotPassword;
 module.exports.resetPassword = resetPassword;
 module.exports.validatePasswordMatch = validatePasswordMatch;
 module.exports.updatePassword = updatePassword;
-module.exports.userUpdateSelf = userUpdateSelf;
+module.exports.userUpdate = userUpdate;

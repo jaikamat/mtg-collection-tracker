@@ -35,7 +35,7 @@ router
   .route('/:id')
   .patch(
     authController.protect,
-    authController.userUpdateSelf
+    authController.userUpdate
   )
 
 // /* POST user listing - edit user */
