@@ -2,6 +2,26 @@ const User = require('../database/models/user');
 const createError = require('http-errors');
 
 /**
+ * Retrieves one active user in the system
+ */
+const getOneUser = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { role } = req.user;
+
+        if (role !== 'admin' && id !== req.user.id) {
+            return next(createError(403, 'Cannot access other user records'));
+        }
+
+        const user = await User.findById(id);
+
+        res.status(200).json({ user });
+    } catch (err) {
+        return next(createError(500, err));
+    }
+}
+
+/**
  * Retrieves all active users in the system
  */
 const getAllUsers = async (req, res, next) => {
@@ -9,7 +29,7 @@ const getAllUsers = async (req, res, next) => {
         const users = await User.find({});
         res.status(200).json({ users });
     } catch (err) {
-        return next(createError(500, err))
+        return next(createError(500, err));
     }
 }
 
@@ -64,6 +84,7 @@ const deleteUser = async (req, res, next) => {
     }
 }
 
+module.exports.getOneUser = getOneUser;
 module.exports.getAllUsers = getAllUsers;
 module.exports.userUpdate = userUpdate;
 module.exports.deleteUser = deleteUser;
